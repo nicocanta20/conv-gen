@@ -1,0 +1,24 @@
+{
+  "model": "gpt-4.1-nano",
+  "prompt": "Tech support for a SaaS platform. Include ticket IDs, subscription tiers (free/pro/enterprise), and error codes.",
+  "scenarios": [
+    "User can't log in to their account",
+    "User reports a bug in the dashboard",
+    "User asks about billing and invoices",
+    "User wants to upgrade their plan",
+    "User asks how to integrate the API",
+    "User complains about slow performance",
+    "User requests a data export",
+    "User asks about downtime and SLA"
+  ],
+  "user_role": "customer",
+  "assistant_role": "tech support agent",
+  "format": "jsonl",
+  "output": "conversations.jsonl",
+  "count": 10,
+  "concurrency": 3,
+  "retries": 3,
+  "max_rpm": 60,
+  "batch": false,
+  "judge": false
+}
