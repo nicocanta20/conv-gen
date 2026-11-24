@@ -41,7 +41,7 @@ async function wizard() {
   const prompt = await ask(rl, "Topic / domain description", "General customer support");
   const userRole = await ask(rl, "User role", "user");
   const assistantRole = await ask(rl, "Assistant role", "assistant");
-  const model = await ask(rl, "Model", "gpt-4.1-nano");
+  const model = await ask(rl, "Model", "gpt-5.6-luna");
   const count = await ask(rl, "Number of conversations", "10");
   const concurrency = await ask(rl, "Concurrency (parallel workers)", "3");
   const format = await ask(rl, "Output format (json, jsonl, sharegpt, openai-ft, alpaca)", "jsonl");
@@ -97,6 +97,15 @@ function buildInstructions(config) {
 - user = ${userRole}, assistant = ${assistantRole}
 - 4-8 turns, natural dialogue
 Topic: ${topicPrompt}`;
+}
+
+// Optional model params, only sent when set in config.
+// GPT-5.x models reject sampling params unless reasoning_effort is "none".
+function samplingParams(config) {
+  const keys = ["temperature", "frequency_penalty", "presence_penalty"];
+  const params = Object.fromEntries(keys.filter((k) => config[k] !== undefined).map((k) => [k, config[k]]));
+  if (config.reasoning_effort) params.reasoning = { effort: config.reasoning_effort };
+  return params;
 }
 
 const CONVERSATION_SCHEMA = {
@@ -390,7 +399,7 @@ class QuietDisplay {
 
 // ━━━ GENERATE (streaming, with retries) ━━━
 
-async function generate(id, slot, display, { client, model, instructions, scenarios, maxRetries, rateLimiter }) {
+async function generate(id, slot, display, { client, model, instructions, scenarios, maxRetries, rateLimiter, sampling }) {
   const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
   let lastError = null;
 
@@ -411,14 +420,12 @@ async function generate(id, slot, display, { client, model, instructions, scenar
     try {
       const stream = await client.responses.create({
         model,
-        max_output_tokens: 1500,
+        max_output_tokens: 4000,
         stream: true,
         instructions,
         input: scenario,
         text: CONVERSATION_SCHEMA,
-        temperature: 0.9,
-        frequency_penalty: 0.5,
-        presence_penalty: 0.5,
+        ...sampling,
         store: false,
       });
 
@@ -461,7 +468,7 @@ async function generate(id, slot, display, { client, model, instructions, scenar
 async function runBatch(config, count, outputPath) {
   const client = new OpenAI();
   const instructions = buildInstructions(config);
-  const model = config.model || "gpt-4.1-nano";
+  const model = config.model || "gpt-5.6-luna";
   const scenarios = config.scenarios || ["General conversation"];
 
   console.log(`\n${c.bold}━━━ BATCH MODE ━━━${c.reset}\n`);
@@ -477,13 +484,11 @@ async function runBatch(config, count, outputPath) {
       url: "/v1/responses",
       body: {
         model,
-        max_output_tokens: 1500,
+        max_output_tokens: 4000,
         instructions,
         input: scenario,
         text: CONVERSATION_SCHEMA,
-        temperature: 0.9,
-        frequency_penalty: 0.5,
-        presence_penalty: 0.5,
+        ...samplingParams(config),
         store: false,
       },
     });
@@ -569,9 +574,10 @@ async function runBatch(config, count, outputPath) {
 async function runStreaming(config, count, concurrency, outputPath, { quiet = false } = {}) {
   const client = new OpenAI();
   const instructions = buildInstructions(config);
-  const model = config.model || "gpt-4.1-nano";
+  const model = config.model || "gpt-5.6-luna";
   const scenarios = config.scenarios || ["General conversation"];
   const maxRetries = config.retries ?? 3;
+  const sampling = samplingParams(config);
   const maxRpm = config.max_rpm || 0;
   const format = config.format || "json";
   const judgeConfig = config.judge || false;
@@ -626,7 +632,7 @@ async function runStreaming(config, count, concurrency, outputPath, { quiet = fa
       inFlight.add(id);
 
       const conv = await generate(id, slot, display, {
-        client, model, instructions, scenarios, maxRetries, rateLimiter,
+        client, model, instructions, scenarios, maxRetries, rateLimiter, sampling,
       });
 
       if (conv) {

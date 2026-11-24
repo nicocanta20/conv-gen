@@ -41,11 +41,17 @@ See `config.example.json`. The key fields:
 }
 ```
 
-Optional: `model`, `format`, `count`, `concurrency`, `retries`, `max_rpm`, `batch`, `judge`.
+Optional: `model`, `format`, `count`, `concurrency`, `retries`, `max_rpm`, `batch`, `judge`, `reasoning_effort`, and `temperature` / `frequency_penalty` / `presence_penalty`.
+
+GPT-5.x models reject the sampling params unless reasoning is off. To use them, set `"reasoning_effort": "none"`:
+
+```json
+{ "reasoning_effort": "none", "temperature": 0.9, "frequency_penalty": 0.5, "presence_penalty": 0.5 }
+```
 
 ## Output formats
 
-`jsonl` (default), `openai-ft`, `sharegpt`, `alpaca`, `json` — set via `"format"` in config.
+`json` (default), `jsonl`, `openai-ft`, `sharegpt`, `alpaca` — set via `"format"` in config.
 
 ## Features
 
