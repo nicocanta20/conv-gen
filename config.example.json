@@ -1,5 +1,5 @@
 {
-  "model": "gpt-5.6-luna",
+  "model": "gpt-6-luna",
   "prompt": "Tech support for a SaaS platform. Include ticket IDs, subscription tiers (free/pro/enterprise), and error codes.",
   "scenarios": [
     "User can't log in to their account",

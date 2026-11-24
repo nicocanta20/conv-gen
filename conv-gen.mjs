@@ -41,7 +41,7 @@ async function wizard() {
   const prompt = await ask(rl, "Topic / domain description", "General customer support");
   const userRole = await ask(rl, "User role", "user");
   const assistantRole = await ask(rl, "Assistant role", "assistant");
-  const model = await ask(rl, "Model", "gpt-5.6-luna");
+  const model = await ask(rl, "Model", "gpt-6-luna");
   const count = await ask(rl, "Number of conversations", "10");
   const concurrency = await ask(rl, "Concurrency (parallel workers)", "3");
   const format = await ask(rl, "Output format (json, jsonl, sharegpt, openai-ft, alpaca)", "jsonl");
@@ -221,7 +221,7 @@ async function judgeConversation(client, model, conv) {
 
   const resp = await client.responses.create({
     model,
-    max_output_tokens: 100,
+    max_output_tokens: 1000,
     instructions: `Rate this conversation's quality on a scale of 1-10. Consider: naturalness, coherence, information density, and realism. Reply with ONLY a JSON object: {"score": N, "reason": "brief reason"}`,
     input: convText,
     store: false,
@@ -468,7 +468,7 @@ async function generate(id, slot, display, { client, model, instructions, scenar
 async function runBatch(config, count, outputPath) {
   const client = new OpenAI();
   const instructions = buildInstructions(config);
-  const model = config.model || "gpt-5.6-luna";
+  const model = config.model || "gpt-6-luna";
   const scenarios = config.scenarios || ["General conversation"];
 
   console.log(`\n${c.bold}━━━ BATCH MODE ━━━${c.reset}\n`);
@@ -574,7 +574,7 @@ async function runBatch(config, count, outputPath) {
 async function runStreaming(config, count, concurrency, outputPath, { quiet = false } = {}) {
   const client = new OpenAI();
   const instructions = buildInstructions(config);
-  const model = config.model || "gpt-5.6-luna";
+  const model = config.model || "gpt-6-luna";
   const scenarios = config.scenarios || ["General conversation"];
   const maxRetries = config.retries ?? 3;
   const sampling = samplingParams(config);
